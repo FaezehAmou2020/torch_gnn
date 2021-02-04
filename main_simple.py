@@ -9,6 +9,21 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 
+# #plotting
+# print performance of one method for now, to be expanded to plot several methods at the same time
+def plot_performance(x_points, y_points,title):
+
+    plt.plot(x_points, y_points)
+
+    plt.xlabel('#epoch')
+    plt.ylabel('Accuracy')
+    plt.title(title)
+
+    #plt.legend()
+    plt.show()
+# #/plotting
+
+
 # GRAPH #1
 
 # List of edges in the first graph - last column is the id of the graph to which the arc belongs
@@ -102,3 +117,8 @@ for epoch in range(1, cfg.epochs + 1):
 
     if epoch % 10 == 0:
         model.test_step(epoch)
+
+# #plotting
+plot_performance(model.arr_its_train,model.arr_acc_train, "Train set Accuracy ")
+plot_performance(model.arr_its_test,model.arr_acc_test, "Test set Accuracy")
+# #/plotting

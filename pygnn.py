@@ -5,7 +5,7 @@ from torch.nn.modules.utils import _pair
 from torch.nn import init
 import math
 from net import MLP, StateTransition
-
+from net import GINTransition, GINPreTransition
 
 class GNN(nn.Module):
 
@@ -31,6 +31,15 @@ class GNN(nn.Module):
             self.state_transition_function = StateTransition(self.state_dim, self.label_dim,
                                                              mlp_hidden_dim=self.state_transition_hidden_dims,
                                                              activation_function=config.activation)
+
+            # self.state_transition_function = GINTransition(self.state_dim, self.label_dim,
+            #                                                 mlp_hidden_dim=self.state_transition_hidden_dims,
+            #                                                 activation_function=config.activation)
+
+            # self.state_transition_function = GINPreTransition(self.state_dim, self.label_dim,
+            #                                               mlp_hidden_dim=self.state_transition_hidden_dims,
+            #                                               activation_function=config.activation)
+
         else:
             self.state_transition_function = state_net
         if out_net is None:

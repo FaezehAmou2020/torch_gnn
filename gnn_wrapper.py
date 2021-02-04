@@ -56,6 +56,13 @@ class GNNWrapper:
             self.writer = SummaryWriter('logs/tensorboard')
         self.first_flag_writer = True
 
+        # #plotting
+        self.arr_its_train = []
+        self.arr_acc_train = []
+        self.arr_its_test = []
+        self.arr_acc_test = []
+        # #/plotting
+
     def __call__(self, dset, state_net=None, out_net=None):
         # handle the dataset info
         self._data_loader(dset)
@@ -113,6 +120,11 @@ class GNNWrapper:
                     'Train Epoch: {} \t Mean Loss: {:.6f}\tAccuracy Full Batch: {:.6f} \t  Best Accuracy : {:.6f}  \t Iterations: {}'.format(
                         epoch, loss, accuracy_train, self.TrainAccuracy.get_best(), iterations))
 
+                # #plotting
+                self.arr_its_train.append(epoch)
+                self.arr_acc_train.append(accuracy_train)
+                # #/plotting
+
                 if self.config.tensorboard:
                     self.writer.add_scalar('Training Accuracy',
                                            accuracy_train,
@@ -148,6 +160,11 @@ class GNNWrapper:
             if epoch % self.config.log_interval == 0:
                 print('Test set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%)'.format(
                     test_loss, acc_test, self.TestAccuracy.get_best()))
+
+                # #plotting
+                self.arr_its_test.append(epoch)
+                self.arr_acc_test.append(acc_test)
+                # #/plotting
 
                 if self.config.tensorboard:
                     self.writer.add_scalar('Test Accuracy',
