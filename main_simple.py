@@ -7,21 +7,22 @@ import dataloader
 from gnn_wrapper import GNNWrapper, SemiSupGNNWrapper
 import matplotlib.pyplot as plt
 import networkx as nx
+import net
 
 
-# #plotting
-# print performance of one method for now, to be expanded to plot several methods at the same time
-def plot_performance(x_points, y_points,title):
-
-    plt.plot(x_points, y_points)
-
-    plt.xlabel('#epoch')
-    plt.ylabel('Accuracy')
-    plt.title(title)
-
-    #plt.legend()
-    plt.show()
-# #/plotting
+# # #plotting
+# # print performance of one method for now, to be expanded to plot several methods at the same time
+# def plot_performance(x_points, y_points,title):
+#
+#     plt.plot(x_points, y_points)
+#
+#     plt.xlabel('#epoch')
+#     plt.ylabel('Accuracy')
+#     plt.title(title)
+#
+#     #plt.legend()
+#     plt.show()
+# # #/plotting
 
 
 # GRAPH #1
@@ -104,12 +105,22 @@ cfg.log_interval = 10
 cfg.task_type = "multiclass"
 cfg.lrw = 0.001
 
+
+dset = dataloader.from_EN_to_GNN(E, N_tot, targets=labels, aggregation_type="sum", sparse_matrix=True)  # generate the dataset
+cfg.label_dim = dset.node_label_dim
+cfg.state_net = net.GINTransition(node_state_dim=cfg.state_dim,
+                 node_label_dim=cfg.label_dim,
+                 mlp_hidden_dim= cfg.state_transition_hidden_dims,
+                 activation_function=cfg.activation
+                 )
+
+
 # model creation
 model = GNNWrapper(cfg)
 # dataset creation
-dset = dataloader.from_EN_to_GNN(E, N_tot, targets=labels, aggregation_type="sum", sparse_matrix=True)  # generate the dataset
 
-model(dset)  # dataset initalization into the GNN
+
+model(dset,state_net=cfg.state_net)  # dataset initalization into the GNN
 
 # training code
 for epoch in range(1, cfg.epochs + 1):
@@ -118,7 +129,7 @@ for epoch in range(1, cfg.epochs + 1):
     if epoch % 10 == 0:
         model.test_step(epoch)
 
-# #plotting
-plot_performance(model.arr_its_train,model.arr_acc_train, "Train set Accuracy ")
-plot_performance(model.arr_its_test,model.arr_acc_test, "Test set Accuracy")
-# #/plotting
+# # #plotting
+# plot_performance(model.arr_its_train,model.arr_acc_train, "Train set Accuracy ")
+# plot_performance(model.arr_its_test,model.arr_acc_test, "Test set Accuracy")
+# # #/plotting
