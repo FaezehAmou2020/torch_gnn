@@ -38,6 +38,7 @@ class GNNWrapper:
             self.output_function_hidden_dims = None
             self.task_type = "semisupervised"
 
+            self.state_net = None #
             # optional
             # self.loss_w = 1.
             # self.energy_weight = 0.
@@ -52,15 +53,18 @@ class GNNWrapper:
         self.train_loader = None
         self.test_loader = None
 
+        self.state_net = config.state_net
         if self.config.tensorboard:
-            self.writer = SummaryWriter('logs/tensorboard')
+            #self.writer = SummaryWriter('logs/tensorboard')
+            self.writer = SummaryWriter(comment=f'/{str(self.state_net)[0:15]}')
+
         self.first_flag_writer = True
 
         # #plotting
-        self.arr_its_train = []
-        self.arr_acc_train = []
-        self.arr_its_test = []
-        self.arr_acc_test = []
+        # self.arr_its_train = []
+        # self.arr_acc_train = []
+        # self.arr_its_test = []
+        # self.arr_acc_test = []
         # #/plotting
 
     def __call__(self, dset, state_net=None, out_net=None):
@@ -121,8 +125,8 @@ class GNNWrapper:
                         epoch, loss, accuracy_train, self.TrainAccuracy.get_best(), iterations))
 
                 # #plotting
-                self.arr_its_train.append(epoch)
-                self.arr_acc_train.append(accuracy_train)
+                # self.arr_its_train.append(epoch)
+                # self.arr_acc_train.append(accuracy_train)
                 # #/plotting
 
                 if self.config.tensorboard:
@@ -162,8 +166,8 @@ class GNNWrapper:
                     test_loss, acc_test, self.TestAccuracy.get_best()))
 
                 # #plotting
-                self.arr_its_test.append(epoch)
-                self.arr_acc_test.append(acc_test)
+                # self.arr_its_test.append(epoch)
+                # self.arr_acc_test.append(acc_test)
                 # #/plotting
 
                 if self.config.tensorboard:

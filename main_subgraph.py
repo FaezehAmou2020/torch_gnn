@@ -10,6 +10,7 @@ import utils
 import dataloader
 
 from gnn_wrapper import GNNWrapper
+import net
 
 
 #
@@ -24,7 +25,7 @@ from gnn_wrapper import GNNWrapper
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch')
-    parser.add_argument('--epochs', type=int, default=100000, metavar='N',
+    parser.add_argument('--epochs', type=int, default=200, metavar='N',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
                         help='learning rate (default: 0.0001)')
@@ -83,22 +84,51 @@ def main():
     cfg.task_type = "multiclass"
 
     # model creation
-    model_tr = GNNWrapper(cfg)
-    model_val = GNNWrapper(cfg)
-    model_tst = GNNWrapper(cfg)
+    # model_tr = GNNWrapper(cfg)
+    # model_val = GNNWrapper(cfg)
+    # model_tst = GNNWrapper(cfg)
     # dataset creation
     dset = dataloader.get_subgraph(set="sub_30_15_200", aggregation_type="sum", sparse_matrix=True)  # generate the dataset
-    model_tr(dset["train"])  # dataset initalization into the GNN
-    model_val(dset["validation"], state_net=model_tr.gnn.state_transition_function, out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
-    model_tst(dset["test"], state_net=model_tr.gnn.state_transition_function, out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
 
-    # training code
-    for epoch in range(1, args.epochs + 1):
-        model_tr.train_step(epoch)
-        if epoch % 10 == 0:
-            model_tst.test_step(epoch)
-            model_val.valid_step(epoch)
-            #model_tst.test_step(epoch)
+    cfg.label_dim = dset["train"].node_label_dim
+
+    state_nets = [
+                    net.StateTransition(cfg.state_dim, cfg.label_dim,
+                            mlp_hidden_dim=cfg.state_transition_hidden_dims,
+                            activation_function=cfg.activation),
+                    net.GINTransition(cfg.state_dim, cfg.label_dim,
+                            mlp_hidden_dim=cfg.state_transition_hidden_dims,
+                            activation_function=cfg.activation),
+                    net.GINPreTransition(cfg.state_dim, cfg.label_dim,
+                            mlp_hidden_dim=cfg.state_transition_hidden_dims,
+                            activation_function=cfg.activation)
+                  ]
+
+
+
+    for state_net in state_nets:
+        cfg.state_net = state_net
+
+        # model creation
+        model_tr = GNNWrapper(cfg)
+        model_val = GNNWrapper(cfg)
+        model_tst = GNNWrapper(cfg)
+
+        model_tr(dset["train"], state_net=state_net)  # dataset initalization into the GNN
+        model_val(dset["validation"], state_net=model_tr.gnn.state_transition_function,
+                  out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
+        model_tst(dset["test"], state_net=model_tr.gnn.state_transition_function,
+                  out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
+        # training code
+        for epoch in range(1, args.epochs + 1):
+            model_tr.train_step(epoch)
+            if epoch % 10 == 0:
+                model_tst.test_step(epoch)
+                model_val.valid_step(epoch)
+                # model_tst.test_step(epoch)
+
+
+
 
     # if args.save_model:
     #     torch.save(model.gnn.state_dict(), "mnist_cnn.pt")
