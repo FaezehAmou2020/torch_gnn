@@ -10,6 +10,7 @@ import torchvision
 from utils import matplotlib_imshow
 import utils
 from pygnn import GNN
+import os
 
 
 class GNNWrapper:
@@ -39,6 +40,8 @@ class GNNWrapper:
             self.task_type = "semisupervised"
 
             self.state_net = None #
+            self.dset_name = None
+            self.aggregation_type = None
             # optional
             # self.loss_w = 1.
             # self.energy_weight = 0.
@@ -56,7 +59,10 @@ class GNNWrapper:
         self.state_net = config.state_net
         if self.config.tensorboard:
             #self.writer = SummaryWriter('logs/tensorboard')
-            self.writer = SummaryWriter(comment=f'/{str(self.state_net)[0:15]}')
+            # self.writer = SummaryWriter(comment=f'/{str(self.state_net)[0:15]}')
+            self.writer = SummaryWriter(log_dir=os.path.join("logs",
+                                                             f"lrw__{self.config.lrw}_state__{self.config.state_dim}",
+                                                             f"{str(self.state_net).split('(')[0]}"))
 
         self.first_flag_writer = True
 
@@ -130,15 +136,19 @@ class GNNWrapper:
                 # #/plotting
 
                 if self.config.tensorboard:
-                    self.writer.add_scalar('Training Accuracy',
-                                           accuracy_train,
-                                           epoch)
-                    self.writer.add_scalar('Training Loss',
-                                           loss,
-                                           epoch)
-                    self.writer.add_scalar('Training Iterations',
-                                           iterations,
-                                           epoch)
+                    self.writer.add_scalar(
+                        f'Training Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        accuracy_train,
+                        epoch)
+
+                    self.writer.add_scalar(
+                        f'Training Loss_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        loss,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Training Iterations_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        iterations,
+                        epoch)
 
                     for name, param in self.gnn.named_parameters():
                         self.writer.add_histogram(name, param, epoch)
@@ -171,15 +181,18 @@ class GNNWrapper:
                 # #/plotting
 
                 if self.config.tensorboard:
-                    self.writer.add_scalar('Test Accuracy',
-                                           acc_test,
-                                           epoch)
-                    self.writer.add_scalar('Test Loss',
-                                           test_loss,
-                                           epoch)
-                    self.writer.add_scalar('Test Iterations',
-                                           iterations,
-                                           epoch)
+                    self.writer.add_scalar(
+                        f'Test Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        acc_test,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Test Loss_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        test_loss,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Test Iterations_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        iterations,
+                        epoch)
 
     def valid_step(self, epoch):
         ####  TEST
@@ -200,15 +213,18 @@ class GNNWrapper:
                     test_loss, acc_valid, self.ValidAccuracy.get_best()))
 
                 if self.config.tensorboard:
-                    self.writer.add_scalar('Valid Accuracy',
-                                           acc_valid,
-                                           epoch)
-                    self.writer.add_scalar('Valid Loss',
-                                           test_loss,
-                                           epoch)
-                    self.writer.add_scalar('Valid Iterations',
-                                           iterations,
-                                           epoch)
+                    self.writer.add_scalar(
+                        f'Valid Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        acc_valid,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Valid Loss_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        test_loss,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Valid Iterations_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        iterations,
+                        epoch)
 
 
 class SemiSupGNNWrapper(GNNWrapper):
@@ -236,6 +252,9 @@ class SemiSupGNNWrapper(GNNWrapper):
             self.state_transition_hidden_dims = None
             self.output_function_hidden_dims = None
 
+            self.state_net = None
+            self.dset_name = None
+            self.aggregation_type = None
             # optional
             # self.loss_w = 1.
             # self.energy_weight = 0.
@@ -291,15 +310,18 @@ class SemiSupGNNWrapper(GNNWrapper):
                         epoch, loss, accuracy_train, self.TrainAccuracy.get_best(), iterations))
 
                 if self.config.tensorboard:
-                    self.writer.add_scalar('Training Accuracy',
-                                           accuracy_train,
-                                           epoch)
-                    self.writer.add_scalar('Training Loss',
-                                           loss,
-                                           epoch)
-                    self.writer.add_scalar('Training Iterations',
-                                           iterations,
-                                           epoch)
+                    self.writer.add_scalar(
+                        f'Training Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        accuracy_train,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Training Loss_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        loss,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Training Iterations_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        iterations,
+                        epoch)
                     for name, param in self.gnn.named_parameters():
                         self.writer.add_histogram(name, param, epoch)
                         self.writer.add_histogram("gradient " + name, param.grad, epoch)
@@ -328,15 +350,18 @@ class SemiSupGNNWrapper(GNNWrapper):
                     test_loss, acc_test, self.TestAccuracy.get_best()))
 
                 if self.config.tensorboard:
-                    self.writer.add_scalar('Test Accuracy',
-                                           acc_test,
-                                           epoch)
-                    self.writer.add_scalar('Test Loss',
-                                           test_loss,
-                                           epoch)
-                    self.writer.add_scalar('Test Iterations',
-                                           iterations,
-                                           epoch)
+                    self.writer.add_scalar(
+                        f'Test Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        acc_test,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Test Loss_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        test_loss,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Test Iterations_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        iterations,
+                        epoch)
 
     def valid_step(self, epoch):
         ####  TEST
@@ -357,12 +382,15 @@ class SemiSupGNNWrapper(GNNWrapper):
                     test_loss, acc_valid, self.ValidAccuracy.get_best()))
 
                 if self.config.tensorboard:
-                    self.writer.add_scalar('Valid Accuracy',
-                                           acc_valid,
-                                           epoch)
-                    self.writer.add_scalar('Valid Loss',
-                                           test_loss,
-                                           epoch)
-                    self.writer.add_scalar('Valid Iterations',
-                                           iterations,
-                                           epoch)
+                    self.writer.add_scalar(
+                        f'Valid Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        acc_valid,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Valid Loss_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        test_loss,
+                        epoch)
+                    self.writer.add_scalar(
+                        f'Valid Iterations_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
+                        iterations,
+                        epoch)

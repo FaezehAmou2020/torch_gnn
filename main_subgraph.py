@@ -11,7 +11,8 @@ import dataloader
 
 from gnn_wrapper import GNNWrapper
 import net
-
+from itertools import product
+import time
 
 #
 # # fix random seeds for reproducibility
@@ -25,7 +26,7 @@ import net
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch')
-    parser.add_argument('--epochs', type=int, default=200, metavar='N',
+    parser.add_argument('--epochs', type=int, default=10000, metavar='N',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
                         help='learning rate (default: 0.0001)')
@@ -75,7 +76,7 @@ def main():
     cfg.activation = nn.Sigmoid()
     cfg.state_transition_hidden_dims = [10, ]
     cfg.output_function_hidden_dims = [ 5]
-    cfg.state_dim = 10
+    cfg.state_dim = 10 #
     cfg.max_iterations = 50
     cfg.convergence_threshold = 0.01
     cfg.graph_based = False
@@ -87,8 +88,11 @@ def main():
     # model_tr = GNNWrapper(cfg)
     # model_val = GNNWrapper(cfg)
     # model_tst = GNNWrapper(cfg)
+
+    cfg.dset_name = "sub_30_15_200"
+    cfg.aggregation_type = "degreenorm"
     # dataset creation
-    dset = dataloader.get_subgraph(set="sub_30_15_200", aggregation_type="sum", sparse_matrix=True)  # generate the dataset
+    dset = dataloader.get_subgraph(set=cfg.dset_name, aggregation_type=cfg.aggregation_type, sparse_matrix=True)  # generate the dataset
 
     cfg.label_dim = dset["train"].node_label_dim
 
@@ -104,11 +108,17 @@ def main():
                             activation_function=cfg.activation)
                   ]
 
+    lrs = [0.05, 0.01, 0.001]
 
+    hyperparameters = dict(lr=lrs, state_net=state_nets)
+    hyperparameters_values = [v for v in hyperparameters.values()]
 
-    for state_net in state_nets:
+    start_0 = time.time()
+    for lr, state_net in product(*hyperparameters_values):
+        cfg.lrw = lr
         cfg.state_net = state_net
 
+        print(f"learning_rate:{lr}, state_dim:{cfg.state_dim}, aggregation function:{str(state_net).split('(')[0]} ")
         # model creation
         model_tr = GNNWrapper(cfg)
         model_val = GNNWrapper(cfg)
@@ -116,10 +126,11 @@ def main():
 
         model_tr(dset["train"], state_net=state_net)  # dataset initalization into the GNN
         model_val(dset["validation"], state_net=model_tr.gnn.state_transition_function,
-                  out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
+                    out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
         model_tst(dset["test"], state_net=model_tr.gnn.state_transition_function,
-                  out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
+                    out_net=model_tr.gnn.output_function)  # dataset initalization into the GNN
         # training code
+        start = time.time()
         for epoch in range(1, args.epochs + 1):
             model_tr.train_step(epoch)
             if epoch % 10 == 0:
@@ -127,9 +138,11 @@ def main():
                 model_val.valid_step(epoch)
                 # model_tst.test_step(epoch)
 
+        time_sample = time.time() - start
+        print(f"time taken for one set: {str(time_sample)} seconds")
 
-
-
+    time_whole = time.time() - start_0
+    print(f"time taken for the whole experiment: {str(time_whole)} seconds")
     # if args.save_model:
     #     torch.save(model.gnn.state_dict(), "mnist_cnn.pt")
 
