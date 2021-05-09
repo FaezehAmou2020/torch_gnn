@@ -123,6 +123,10 @@ def main():
         model_tr = GNNWrapper(cfg)
         model_val = GNNWrapper(cfg)
         model_tst = GNNWrapper(cfg)
+              
+        # 24.3.21 STOPPER
+        early_stopper = utils.EarlyStopper(cfg)
+
 
         model_tr(dset["train"], state_net=state_net)  # dataset initalization into the GNN
         model_val(dset["validation"], state_net=model_tr.gnn.state_transition_function,
@@ -132,10 +136,16 @@ def main():
         # training code
         start = time.time()
         for epoch in range(1, args.epochs + 1):
-            model_tr.train_step(epoch)
+            acc_train = model_tr.train_step(epoch)
             if epoch % 10 == 0:
-                model_tst.test_step(epoch)
-                model_val.valid_step(epoch)
+                acc_tst = model_tst.test_step(epoch)
+                acc_val = model_val.valid_step(epoch)
+                stp = early_stopper(acc_train, acc_val, acc_tst, epoch)
+                
+                # return -1 keeps training the model!
+                if stp == -1:
+                    print(f"{early_stopper.best_epoch}, \t {early_stopper.best_train}, \t, {early_stopper.best_val}, \t {early_stopper.best_test}")
+                    break
                 # model_tst.test_step(epoch)
 
         time_sample = time.time() - start
