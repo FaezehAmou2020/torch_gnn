@@ -72,6 +72,12 @@ class GNNWrapper:
         # self.arr_its_test = []
         # self.arr_acc_test = []
         # #/plotting
+                                                             
+        # Write logs into a file:
+        self.file_logs = open(f"txtlogs.txt", "a")
+        self.file_logs.write(
+            f" *#*#*#*#*# Logs for: Dataset:{self.config.dset_name}, learning_rate: {self.config.lrw}, state_dim:{self.config.state_dim}, aggregation function:{str(self.state_net).split('(')[0]} , aggregation type:{self.config.aggregation_type}  *#*#*#*#*#  \n")
+        self.file_logs.close()
 
     def __call__(self, dset, state_net=None, out_net=None):
         # handle the dataset info
@@ -130,6 +136,11 @@ class GNNWrapper:
                     'Train Epoch: {} \t Mean Loss: {:.6f}\tAccuracy Full Batch: {:.6f} \t  Best Accuracy : {:.6f}  \t Iterations: {}'.format(
                         epoch, loss, accuracy_train, self.TrainAccuracy.get_best(), iterations))
 
+                self.file_logs = open(f"txtlogs.txt", "a")
+                self.file_logs.write('Train Epoch: {} \t Mean Loss: {:.6f}\tAccuracy Full Batch: {:.6f} \t  Best Accuracy : {:.6f}  \t Iterations: {} \n'.format(
+                        epoch, loss, accuracy_train, self.TrainAccuracy.get_best(), iterations))
+                self.file_logs.close()
+
                 # #plotting
                 # self.arr_its_train.append(epoch)
                 # self.arr_acc_train.append(accuracy_train)
@@ -152,7 +163,10 @@ class GNNWrapper:
 
                     for name, param in self.gnn.named_parameters():
                         self.writer.add_histogram(name, param, epoch)
+            return accuracy_train  #
         # self.TrainAccuracy.reset()
+            
+            
 
     def predict(self, edges, agg_matrix, node_labels):
         return self.gnn(edges, agg_matrix, node_labels)
@@ -175,6 +189,11 @@ class GNNWrapper:
                 print('Test set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%)'.format(
                     test_loss, acc_test, self.TestAccuracy.get_best()))
 
+                self.file_logs = open(f"txtlogs.txt", "a")
+                self.file_logs.write('Test set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%) \n'.format(
+                        test_loss, acc_test, self.TestAccuracy.get_best()))
+                self.file_logs.close()
+
                 # #plotting
                 # self.arr_its_test.append(epoch)
                 # self.arr_acc_test.append(acc_test)
@@ -193,6 +212,8 @@ class GNNWrapper:
                         f'Test Iterations_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
                         iterations,
                         epoch)
+            
+                return acc_test
 
     def valid_step(self, epoch):
         ####  TEST
@@ -212,6 +233,12 @@ class GNNWrapper:
                 print('Valid set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%)'.format(
                     test_loss, acc_valid, self.ValidAccuracy.get_best()))
 
+                self.file_logs = open(f"txtlogs.txt", "a")
+                self.file_logs.write('Valid set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%) \n'.format(
+                        test_loss, acc_valid, self.ValidAccuracy.get_best()))
+                self.file_logs.close()
+
+            
                 if self.config.tensorboard:
                     self.writer.add_scalar(
                         f'Valid Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
@@ -226,6 +253,7 @@ class GNNWrapper:
                         iterations,
                         epoch)
 
+                return acc_valid
 
 class SemiSupGNNWrapper(GNNWrapper):
     class Config:
@@ -309,6 +337,11 @@ class SemiSupGNNWrapper(GNNWrapper):
                     'Train Epoch: {} \t Mean Loss: {:.6f}\tAccuracy Full Batch: {:.6f} \t  Best Accuracy : {:.6f}  \t Iterations: {}'.format(
                         epoch, loss, accuracy_train, self.TrainAccuracy.get_best(), iterations))
 
+                self.file_logs = open(f"txtlogs.txt", "a")
+                self.file_logs.write('Train Epoch: {} \t Mean Loss: {:.6f}\tAccuracy Full Batch: {:.6f} \t  Best Accuracy : {:.6f}  \t Iterations: {} \n'.format(
+                        epoch, loss, accuracy_train, self.TrainAccuracy.get_best(), iterations))
+                self.file_logs.close()
+
                 if self.config.tensorboard:
                     self.writer.add_scalar(
                         f'Training Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
@@ -326,7 +359,7 @@ class SemiSupGNNWrapper(GNNWrapper):
                         self.writer.add_histogram(name, param, epoch)
                         self.writer.add_histogram("gradient " + name, param.grad, epoch)
         # self.TrainAccuracy.reset()
-        return output # used for plotting
+        return accuracy_train  #
 
     def predict(self, edges, agg_matrix, node_labels):
         return self.gnn(edges, agg_matrix, node_labels)
@@ -349,6 +382,11 @@ class SemiSupGNNWrapper(GNNWrapper):
                 print('Test set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%)'.format(
                     test_loss, acc_test, self.TestAccuracy.get_best()))
 
+                self.file_logs = open(f"txtlogs.txt", "a")
+                self.file_logs.write('Test set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%) \n'.format(
+                        test_loss, acc_test, self.TestAccuracy.get_best()))
+                self.file_logs.close()
+
                 if self.config.tensorboard:
                     self.writer.add_scalar(
                         f'Test Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
@@ -362,6 +400,7 @@ class SemiSupGNNWrapper(GNNWrapper):
                         f'Test Iterations_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
                         iterations,
                         epoch)
+            return acc_test
 
     def valid_step(self, epoch):
         ####  TEST
@@ -381,6 +420,12 @@ class SemiSupGNNWrapper(GNNWrapper):
                 print('Valid set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%)'.format(
                     test_loss, acc_valid, self.ValidAccuracy.get_best()))
 
+            
+                self.file_logs = open(f"txtlogs.txt", "a")
+                self.file_logs.write('Valid set: Average loss: {:.4f}, Accuracy:  ({:.4f}%) , Best Accuracy:  ({:.4f}%) \n'.format(
+                        test_loss, acc_valid, self.ValidAccuracy.get_best()))
+                self.file_logs.close()
+            
                 if self.config.tensorboard:
                     self.writer.add_scalar(
                         f'Valid Accuracy_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
@@ -394,3 +439,4 @@ class SemiSupGNNWrapper(GNNWrapper):
                         f'Valid Iterations_{self.config.dset_name}/aggregation_{self.config.aggregation_type}',
                         iterations,
                         epoch)
+            return acc_valid
