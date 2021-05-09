@@ -172,3 +172,48 @@ def get_G_function(descr, eps):
         def G(x):
             return x
     return G
+
+
+class EarlyStopper:
+    def __init__(self, config):
+        self.best_val = None
+        self.best_train = None
+        self.best_test = None
+        self.first_flag = True
+        self.best_epoch = 0
+        self.counter = 0
+        #self.folder = folder
+        #self.global_folder = global_folder
+        self.config = config
+        self.stop_treshold = 2500 #5000
+        self.file_logs = None
+
+    def __call__(self, ac, acv, act, j):
+
+        if self.first_flag:
+            self.best_val = acv
+            self.best_train = ac
+            self.best_test = act
+            self.first_flag = False
+
+        if acv > self.best_val:
+            # print("New best accuracy on validation: ", acv)
+            self.best_val = acv
+            # print("New best accuracy on test: ", ac)
+            self.best_test = act
+            self.best_train = ac
+            self.best_epoch = j
+            self.counter = 0
+        else:
+            self.counter += 10 # because validation and test steps are taken every 10 epochs in main
+
+        if self.counter > self.stop_treshold:  # stop if accuracy on validation does not increase for 5000 epochs
+            print(f"Early stopping at epoch {self.best_epoch} ...")
+
+            self.file_logs = open(f"txtlogs.txt", "a")
+            self.file_logs.write(f" Early stopping at epoch {self.best_epoch} with threshhold {self.stop_treshold} \t "
+                                 f"best_train_acc: {self.best_train}, \t, best_validation_acc: {self.best_val}, \t best_test_acc: {self.best_test} \n")
+            self.file_logs.close()
+
+            # self.final_log()
+            return -1
